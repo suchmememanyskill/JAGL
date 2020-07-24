@@ -196,7 +196,7 @@ void SelectSelection(Context_t *ctx){
 int menuRun = 1;
 
 Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler){
-    int selectionMade = 0, touchSelection = -1, timer = 0, timeOfTimer = 21;
+    int selectionMade = 0, touchSelection = -1, timer = 0, timeOfTimer = 21, hasScreenChanged;
     Context_t ctx = {0, 0, NULL, in, 0,0,0};
     
     for (ShapeLinker_t *iter = in; iter != NULL; iter = iter->next){
@@ -217,6 +217,7 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler){
         ctx.kDown = hidKeysDown(CONTROLLER_P1_AUTO);
         ctx.kUp = hidKeysUp(CONTROLLER_P1_AUTO);
         ctx.kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+        hasScreenChanged = 1;
         
         if (timer > 0){
             timer--;
@@ -266,8 +267,12 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler){
         else if (ctx.kHeld & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP | KEY_RSTICK_DOWN | KEY_RSTICK_LEFT | KEY_RSTICK_RIGHT | KEY_RSTICK_UP)){            
             int direction = 0, res = -1;
             
-            if (timer > 1 && ctx.kHeld & (KEY_RSTICK_DOWN | KEY_RSTICK_LEFT | KEY_RSTICK_RIGHT | KEY_RSTICK_UP))
-                timer = 1;
+            if (timer > 1 && ctx.kHeld & (KEY_RSTICK_DOWN | KEY_RSTICK_LEFT | KEY_RSTICK_RIGHT | KEY_RSTICK_UP)){
+            	if (ctx.kHeld & KEY_RSTICK)
+            		timer = 0;
+            	else
+                	timer = 1;
+            }
 
             if (timer == 0){
                 timer = timeOfTimer;
@@ -320,6 +325,9 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler){
                     SelectSelection(&ctx);
                 }
             }
+            else {
+            	hasScreenChanged = 0;
+            }
         }
         else if (ctx.kDown){
             if (buttonHandler != NULL){
@@ -332,6 +340,9 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler){
             timer = 0;
             timeOfTimer = 21;
         }
+        else {
+        	hasScreenChanged = 0;
+        }
 
         if (ctx.selected->type == ListViewType){
             if (((ListView_t *)ctx.selected->item)->changeSelection != NULL){
@@ -341,7 +352,10 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler){
                 
         }
 
-        RenderShapeLinkList(ctx.all);
+        if (hasScreenChanged && menuRun)
+        	RenderShapeLinkList(ctx.all);
+        else if (menuRun)
+        	svcSleepThread(16000000); // To stay consistent with vblank
     }
 
     ctx.origin = OriginPlus;

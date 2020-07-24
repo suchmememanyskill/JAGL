@@ -3,7 +3,10 @@
 
 #define MAX_FONT 15
 
+// The default font used by the system. Array index is defined by FSize
 extern TTF_Font *FONT_TEXT[MAX_FONT];
+
+// The button icons used by the system. Array index is defined by FSize
 extern TTF_Font *FONT_BTN[MAX_FONT];
 
 typedef enum
@@ -25,5 +28,6 @@ typedef enum
     FSize170,
 } FSize;
 
+// Initialise FONT_TEXT and FONT_BTN
 int FontInit();
 void FontExit();
