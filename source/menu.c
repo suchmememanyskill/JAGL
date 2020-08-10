@@ -29,6 +29,11 @@ int _JumpToClosestBox(ShapeLinker_t *list, int direction, ShapeLinker_t *src, in
         srcx = srclv->pos.x + srclv->pos.w / 2;
         srcy = srclv->pos.y + srclv->pos.h / 2;
     }
+    else if (src->type == ListGridType){
+        ListGrid_t *srcgv = src->item;
+        srcx = srcgv->pos.x + srcgv->pos.w / 2;
+        srcy = srcgv->pos.y + srcgv->pos.h / 2;
+    }
     else {
         return -1;
     }
@@ -55,6 +60,14 @@ int _JumpToClosestBox(ShapeLinker_t *list, int direction, ShapeLinker_t *src, in
             dsty = dstlv->pos.y + dstlv->pos.h / 2;
 
             if (dstlv-> options & (LIST_DISABLED | LIST_AUTO))
+                continue;
+        }
+        else if (iter->type == ListGridType){
+            ListGrid_t *dstgv = iter->item;
+            dstx = dstgv->pos.x + dstgv->pos.w / 2;
+            dsty = dstgv->pos.y + dstgv->pos.h / 2;
+
+            if (dstgv-> options & (LIST_DISABLED | LIST_AUTO))
                 continue;
         }
         else {
@@ -97,61 +110,22 @@ int CheckTouchCollision(ShapeLinker_t *list){
         if (iter->type < ListViewType)
             continue;
 
-        if (iter->type == ButtonType){
-            Button_t *btn = (Button_t*)iter->item;
-            if (btn->options & BUTTON_DISABLED)
-                continue;
-
-            if (btn->pos.x < touchX && btn->pos.x + btn->pos.w > touchX && btn->pos.y < touchY && btn->pos.y + btn->pos.h > touchY){
-                btn->options |= BUTTON_PRESSED;
-                return offset;
-            }
-            else {
-                SETBIT(btn->options, BUTTON_PRESSED, 0);
-            }
-        }
-        else if (iter->type == ListViewType){
-            ListView_t *lv = (ListView_t*)iter->item;
-            if (lv->options & LIST_DISABLED)
-                continue;
-
-            if (lv->pos.x < touchX && lv->pos.x + lv->pos.w > touchX && lv->pos.y < touchY && lv->pos.y + lv->pos.h > touchY){
-                int max = ShapeLinkCount(lv->text), pressedEntry = (touchY - lv->pos.y + lv->offset) / lv->entrySize;
-
-                if (lv->pos.x + lv->pos.w - 50 < touchX && lv->entrySize * max > lv->pos.h){
-                    float percentOnScreen = (float)lv->pos.h / (lv->entrySize * max);
-                    float sizePerPixel =  ((float)lv->pos.h - lv->pos.h * percentOnScreen) / (float)(max * lv->entrySize - lv->pos.h);
-
-                    int minY = lv->pos.y + (lv->pos.h * percentOnScreen / 2);
-                    int maxY = lv->pos.y + lv->pos.h - (lv->pos.h * percentOnScreen / 2);
-
-                    if (minY < touchY && maxY > touchY){
-                        lv->offset = (touchY - minY) / sizePerPixel;
-                        lv->highlight = lv->offset / lv->entrySize + 1;
-                    }
-                    else if (minY > touchY){
-                        lv->highlight = 0;
-                    }
-                    else if (maxY < touchY){
-                        lv->offset = (lv->pos.h - lv->pos.h * percentOnScreen) / sizePerPixel;
-                        lv->highlight = lv->offset / lv->entrySize + 1;
-                    }
-
-                    SETBIT(lv->options, (LIST_SELECTED | LIST_PRESSED), 0);
-                }
-                else {
-                    if (pressedEntry >= max)
-                        continue;
-
-                    lv->highlight = pressedEntry;
-
-                    lv->options |= LIST_PRESSED | LIST_SELECTED;
+        switch (iter->type){
+            case ButtonType:;
+                Button_t *btn = iter->item;
+                if (CheckTouchCollisionButton(btn, touchX, touchY))
                     return offset;
-                }
-            }
-            else {
-                SETBIT(lv->options, (LIST_SELECTED | LIST_PRESSED), 0);
-            }
+                break;
+            case ListViewType:;
+                ListView_t *lv = iter->item;
+                if (CheckTouchCollisionListView(lv, touchX, touchY))
+                    return offset;
+                break;
+            case ListGridType:;
+                ListGrid_t *gv = iter->item;
+                if (CheckTouchCollisionListGrid(gv, touchX, touchY))
+                    return offset;
+                break;
         }
     }
 
@@ -171,6 +145,12 @@ int RunSelection(Context_t *ctx){
         if (lv->function != NULL)
             return lv->function(ctx);
     }
+    else if (ctx->selected->type == ListGridType){
+        ListGrid_t *gv = ctx->selected->item;
+        SETBIT(gv->options, LIST_PRESSED, 0);
+        if (gv->function != NULL)
+            return gv->function(ctx);
+    }
 
     return 0;
 }
@@ -182,6 +162,9 @@ void ActivateSelection(Context_t *ctx){
     else if (ctx->selected->type == ListViewType){
         ((ListView_t*)ctx->selected->item)->options |= LIST_PRESSED;
     }
+    else if (ctx->selected->type == ListGridType){
+        ((ListGrid_t*)ctx->selected->item)->options |= LIST_PRESSED;
+    }
 }
 
 void SelectSelection(Context_t *ctx){
@@ -190,6 +173,9 @@ void SelectSelection(Context_t *ctx){
     }
     else if (ctx->selected->type == ListViewType){
         ((ListView_t*)ctx->selected->item)->options |= LIST_SELECTED;
+    }
+    else if (ctx->selected->type == ListGridType){
+        ((ListGrid_t*)ctx->selected->item)->options |= LIST_SELECTED;
     }
 }
 
@@ -304,6 +290,31 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler){
                         res = _JumpToClosestBox(ctx.all, direction, ctx.selected, ctx.curOffset);
                     }
                 }
+                else if (ctx.selected->type == ListGridType){
+                    ListGrid_t *gv = ctx.selected->item;
+
+                    gv->options |= LIST_SELECTED;
+
+                    int count = ShapeLinkCount(gv->text);
+                    int c = gv->fitOnX;
+
+                    if (gv->highlight < count - 1 && direction == DirectionRight && gv->highlight % c != c - 1)
+                        gv->highlight++;
+                    else if (gv->highlight > 0 && direction == DirectionLeft && gv->highlight % c != 0)
+                        gv->highlight--;
+                    else if (direction == DirectionDown){
+                        if (gv->highlight < count - c)
+                            gv->highlight += c;
+                        else if (gv->highlight < count - count % c)
+                            gv->highlight = count - 1;
+                    }
+                        
+                    else if (gv->highlight >= c && direction == DirectionUp)
+                        gv->highlight -= c;
+                    else {
+                        res = _JumpToClosestBox(ctx.all, direction, ctx.selected, ctx.curOffset);
+                    }
+                }
                 else {
                     ((Button_t*)ctx.selected->item)->options |= BUTTON_HIGHLIGHT;
                     res = _JumpToClosestBox(ctx.all, direction, ctx.selected, ctx.curOffset);
@@ -317,6 +328,9 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler){
                     }
                     else if (ctx.selected->type == ListViewType){
                         SETBIT(((ListView_t*)ctx.selected->item)->options, (LIST_PRESSED | LIST_SELECTED), 0);
+                    }
+                    else if (ctx.selected->type == ListGridType){
+                        SETBIT(((ListGrid_t*)ctx.selected->item)->options, (LIST_PRESSED | LIST_SELECTED), 0);
                     }
 
                     ctx.curOffset = res;

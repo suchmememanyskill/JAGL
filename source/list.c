@@ -75,6 +75,9 @@ void ShapeLinkDispose(ShapeLinker_t **start){
             case ListItemType:
                 ListItemFree(iter->item);
                 break;
+            case ListGridType:
+                ListGridFree(iter->item);
+                break;
         }
 
         free(iter);

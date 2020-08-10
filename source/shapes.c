@@ -139,6 +139,22 @@ void DrawButton(Button_t *button){
     TextCenteredFree(text);
 }
 
+int CheckTouchCollisionButton(Button_t *btn, int touchX, int touchY){
+    if (btn->options & BUTTON_DISABLED)
+        return 0;
+
+    if (btn->pos.x < touchX && btn->pos.x + btn->pos.w > touchX && btn->pos.y < touchY && btn->pos.y + btn->pos.h > touchY){
+        btn->options |= BUTTON_PRESSED;
+        return 1;
+    }
+    else {
+        SETBIT(btn->options, BUTTON_PRESSED, 0);
+    }
+
+    return 0;
+}
+
+
 ListItem_t *ListItemCreate(SDL_Color LColor, SDL_Color RColor, SDL_Texture *LImg, char *LText, char *RText){
     ListItem_t *out = calloc(1, sizeof(ListItem_t));
     out->leftColor = LColor;
@@ -188,6 +204,9 @@ void ListViewFree(ListView_t *lv){
 }
 
 void DrawListView(ListView_t *listview){
+    if (listview->text == NULL)
+        return;
+        
     int listLen = ShapeLinkCount(listview->text);
     if (listview->options & LIST_AUTO){
         listview->highlight = listLen - 1;
@@ -286,6 +305,254 @@ void DrawListView(ListView_t *listview){
     }
 
     SetClipRectSDL(NULL);
+}
+
+int CheckTouchCollisionListView(ListView_t *lv, int touchX, int touchY){
+    if (lv->options & LIST_DISABLED)
+        return 0;
+
+    if (lv->pos.x < touchX && lv->pos.x + lv->pos.w > touchX && lv->pos.y < touchY && lv->pos.y + lv->pos.h > touchY){
+        int max = ShapeLinkCount(lv->text), pressedEntry = (touchY - lv->pos.y + lv->offset) / lv->entrySize;
+
+        if (lv->pos.x + lv->pos.w - 50 < touchX && lv->entrySize * max > lv->pos.h){
+            float percentOnScreen = (float)lv->pos.h / (lv->entrySize * max);
+            float sizePerPixel =  ((float)lv->pos.h - lv->pos.h * percentOnScreen) / (float)(max * lv->entrySize - lv->pos.h);
+
+            int minY = lv->pos.y + (lv->pos.h * percentOnScreen / 2);
+            int maxY = lv->pos.y + lv->pos.h - (lv->pos.h * percentOnScreen / 2);
+
+            if (minY < touchY && maxY > touchY){
+                lv->offset = (touchY - minY) / sizePerPixel;
+                lv->highlight = lv->offset / lv->entrySize + 1;
+            }
+            else if (minY > touchY){
+                lv->highlight = 0;
+            }
+            else if (maxY < touchY){
+                lv->offset = (lv->pos.h - lv->pos.h * percentOnScreen) / sizePerPixel;
+                lv->highlight = lv->offset / lv->entrySize + 1;
+            }
+
+            SETBIT(lv->options, (LIST_SELECTED | LIST_PRESSED), 0);
+        }
+        else {
+            if (pressedEntry >= max)
+                return 0;
+
+            lv->highlight = pressedEntry;
+
+            lv->options |= LIST_PRESSED | LIST_SELECTED;
+            return 1;
+        }
+    }
+    else {
+        SETBIT(lv->options, (LIST_SELECTED | LIST_PRESSED), 0);
+    }
+
+    return 0;
+}
+
+ListGrid_t *ListGridCreate(SDL_Rect pos, u8 fitOnX, int entryYSize, SDL_Color primary, SDL_Color selected, SDL_Color pressed, u8 options, ShapeLinker_t *textList, func_ptr function, func_ptr selectionChanged, TTF_Font *font){
+    ListGrid_t *out = malloc(sizeof(ListGrid_t));
+    out->primary = primary;
+    out->selected = selected;
+    out->pressed = pressed;
+    out->options = options;
+    out->highlight = 0;
+    out->offset = 0;
+    out->text = textList;
+    out->function = function;
+    out->font = font;
+    out->fitOnX = fitOnX;
+    out->entryYSize = entryYSize;
+    out->pos = pos;
+    out->changeSelection = selectionChanged;
+
+    return out;
+}
+
+void ListGridFree(ListGrid_t *gv){
+    ShapeLinkDispose(&gv->text);
+    free(gv);
+}
+
+void DrawListGrid(ListGrid_t *gv){
+    if (gv->text == NULL)
+        return;
+
+    int listLen = ShapeLinkCount(gv->text);
+    bool scrollbar = gv->pos.h < ceil(listLen / 4.0f) * gv->entryYSize;
+    
+    int entryXSize = (gv->pos.w - ((scrollbar) ? 50 : 0)) / gv->fitOnX;
+
+    
+    if (gv->highlight >= 0){
+        int minView, maxView, minFrame, maxFrame;
+        minFrame = gv->offset;
+        maxFrame = minFrame + gv->pos.h;
+        minView = gv->entryYSize * (gv->highlight / gv->fitOnX);
+        maxView = minView + gv->entryYSize;
+
+        if (minFrame > minView){
+            gv->offset -= minFrame - minView;
+        }
+        if (maxFrame < maxView){
+            gv->offset += maxView - maxFrame;
+        }
+    }
+    
+
+    int currentGridYOffset = gv->offset / gv->entryYSize, currentGridYOffsetRemainder = gv->offset % gv->entryYSize;
+    int curYPixOffset = currentGridYOffsetRemainder * -1, curXPixOffset = 0;
+
+    Rectangle_t bg = {gv->pos, gv->primary, 1};
+    DrawRectSDL(&bg);
+
+    if (scrollbar){
+        Rectangle_t scrollBg = {POS(gv->pos.x + gv->pos.w - 50, gv->pos.y, 50, gv->pos.h), gv->selected, 1};
+
+        float percentOnScreen =  (float)gv->pos.h / ((ceil(listLen / 4.0f) * 4) / (float)gv->fitOnX * gv->entryYSize);
+        float sizePerPixel =  ((float)gv->pos.h - gv->pos.h * percentOnScreen) / (float)(((ceil(listLen / 4.0f) * 4) / (float)gv->fitOnX * gv->entryYSize) - gv->pos.h);
+
+        Rectangle_t scrollBar = {POS(gv->pos.x + gv->pos.w - 50, gv->pos.y + (sizePerPixel * gv->offset), 50, (gv->pos.h * percentOnScreen)), gv->pressed, 1};
+
+        DrawRectSDL(&scrollBg);
+        DrawRectSDL(&scrollBar);
+    }
+
+    // SetClipRectSDL(&gv->pos);
+    ShapeLinker_t *link = ShapeLinkOffset(gv->text, currentGridYOffset * gv->fitOnX);
+    int count = currentGridYOffset * gv->fitOnX;
+
+    //TextCentered_t debug = {100, 50, {800, 0, CopyTextArgsUtil("%d %d", currentGridYOffset)}}
+
+    while (link != NULL && curYPixOffset < gv->pos.h){
+        int posY = gv->pos.y + curYPixOffset;
+        int posH = gv->entryYSize;
+
+        /*
+        if (gv->pos.h - curYPixOffset < gv->entryYSize){
+            posH -= gv->pos.h - curYPixOffset;
+            if (posH < 0){
+                // Useless, loop will break before this!
+                break;
+            }
+                
+        }
+        */
+
+        for (; link != NULL && curXPixOffset < gv->pos.w - 100; link = link->next){
+            ListItem_t *item = link->item;
+
+            int posX = curXPixOffset + gv->pos.x + 5;
+            int posW = entryXSize - 10;
+            int clipH = (curYPixOffset < 0) ? posH + curYPixOffset : posH; 
+            //int clipH = posH;
+            int clipY = (curYPixOffset < 0) ? gv->pos.y : posY;
+
+            
+            if (clipY + clipH > gv->pos.y + gv->pos.h)
+                clipH += gv->pos.y + gv->pos.h - clipY + clipH;
+            
+
+            SDL_Rect clip = POS(posX, clipY, posW, clipH);
+            //Log(CopyTextArgsUtil("%d %d %d %d\n", posX, posY, posW, posH));
+            SetClipRectSDL(&clip);
+
+            if (count == gv->highlight && gv->options & (LIST_SELECTED | LIST_PRESSED)){
+                Rectangle_t hl = {clip, (gv->options & LIST_PRESSED) ? gv->pressed : gv->selected, 1};
+                DrawRectSDL(&hl);
+            }
+
+
+            int AddYOffset = 5;
+
+            if (item->leftImg){
+                int h = posW / 16.0f * 9;
+                Image_t img = {item->leftImg, POS(posX, posY + AddYOffset, posW, h)};
+                DrawImageSDL(&img);
+                AddYOffset += 5 + h;
+            }
+
+            if (item->leftText){
+                int r = (gv->entryYSize - AddYOffset) / 3;
+                TextCentered_t TText = {posW, r, {posX, posY + AddYOffset, item->leftText, item->leftColor, gv->font}};
+                AddYOffset += r;
+                DrawCenteredTextSDL(&TText);
+            }
+
+            if (item->rightText){
+                int r = (gv->entryYSize - AddYOffset) / 2;
+                TextCentered_t DText = {posW, r, {posX, posY + AddYOffset, item->rightText, item->rightColor, gv->font}};
+                DrawCenteredTextSDL(&DText);
+            }
+
+            curXPixOffset += entryXSize;
+            count++;
+        }
+
+        curYPixOffset += gv->entryYSize;
+        curXPixOffset = 0;
+        //Log(CopyTextArgsUtil("%d\n", curYPixOffset));
+    }
+
+    //Log("Render done!\n\n");
+    SetClipRectSDL(NULL);
+}
+
+int CheckTouchCollisionListGrid(ListGrid_t *gv, int touchX, int touchY){ // stubbed
+    if (gv->options & LIST_DISABLED)
+        return 0;
+    
+    if (gv->pos.x < touchX && gv->pos.x + gv->pos.w > touchX && gv->pos.y < touchY && gv->pos.y + gv->pos.h > touchY){
+        int listLen = ShapeLinkCount(gv->text);
+        bool scrollbar = gv->pos.h < ceil(listLen / 4.0f) * gv->entryYSize;
+
+        if (gv->pos.x + gv->pos.w - 50 < touchX && scrollbar){
+            float percentOnScreen =  (float)gv->pos.h / ((ceil(listLen / 4.0f) * 4) / (float)gv->fitOnX * gv->entryYSize);
+            float sizePerPixel =  ((float)gv->pos.h - gv->pos.h * percentOnScreen) / (float)(((ceil(listLen / 4.0f) * 4) / (float)gv->fitOnX * gv->entryYSize) - gv->pos.h);
+
+            int minY = gv->pos.y + (gv->pos.h * percentOnScreen / 2);
+            int maxY = gv->pos.y + gv->pos.h - (gv->pos.h * percentOnScreen / 2);
+
+            if (minY < touchY && maxY > touchY){
+                gv->offset = (touchY - minY) / sizePerPixel;
+                gv->highlight = ((gv->offset / gv->entryYSize) + 1) * gv->fitOnX;
+            }
+            else if (minY > touchY){
+                gv->highlight = 0;
+            }
+            else if (maxY < touchY){
+                gv->offset = (gv->pos.h - gv->pos.h * percentOnScreen) / sizePerPixel;
+                gv->highlight = gv->offset / gv->entryYSize + gv->fitOnX;
+                //minView = gv->entryYSize * (gv->highlight / gv->fitOnX);
+                gv->highlight = ((gv->offset / gv->entryYSize) + 1) * gv->fitOnX;
+            }
+
+        }
+        else {
+            int entryXSize = (gv->pos.w - ((scrollbar) ? 50 : 0)) / gv->fitOnX;
+
+            int rSel = (touchY - gv->pos.y + gv->offset) / gv->entryYSize;
+            int cSel = (touchX - gv->pos.x) / entryXSize;
+
+            if (cSel > gv->fitOnX)
+                return 0;
+
+            int sel = rSel * gv->fitOnX + cSel;
+
+            if (sel < listLen){
+                gv->highlight = sel;
+
+                gv->options |= LIST_PRESSED | LIST_SELECTED;
+                return 1;
+            }
+        }
+    }
+
+
+    SETBIT(gv->options, (LIST_SELECTED | LIST_PRESSED), 0);
+    return 0; 
 }
 
 ProgressBar_t *ProgressBarCreate(SDL_Rect pos, SDL_Color primary, SDL_Color secondary, u8 style, u8 percentage){

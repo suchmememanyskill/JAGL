@@ -43,6 +43,7 @@ enum ShapeTypes{
     ListItemType,
     DataType, // This is an invalid type, this also won't get cleaned up. this is just that you can safely add an entry to the list and read (and find) it back later.
     ListViewType,
+    ListGridType,
     ButtonType,
 };
 
@@ -149,6 +150,20 @@ typedef struct {
     TTF_Font *font;
 } ListView_t;
 
+typedef struct {
+    SDL_Rect pos;
+    u8 fitOnX;
+    int entryYSize;
+    SDL_Color primary, selected, pressed;
+    u8 options;
+    int highlight;
+    int offset;
+    ShapeLinker_t *text;
+    func_ptr function;
+    func_ptr changeSelection;
+    TTF_Font *font;
+} ListGrid_t;
+
 enum {
     ProgressBarStyleFlat = 0,
     ProgressBarStyleBorder,
@@ -189,3 +204,9 @@ void RectangleFree(Rectangle_t *Rectangle);
 void GlyphFree(Glyph_t *glyph);
 ListItem_t *ListItemCreate(SDL_Color LColor, SDL_Color RColor, SDL_Texture *LImg, char *LText, char *RText);
 void ListItemFree(ListItem_t *li);
+int CheckTouchCollisionButton(Button_t *btn, int touchX, int touchY);
+int CheckTouchCollisionListView(ListView_t *lv, int touchX, int touchY);
+void DrawListGrid(ListGrid_t *gv);
+void ListGridFree(ListGrid_t *gv);
+ListGrid_t *ListGridCreate(SDL_Rect pos, u8 fitOnX, int entryYSize, SDL_Color primary, SDL_Color selected, SDL_Color pressed, u8 options, ShapeLinker_t *textList, func_ptr function, func_ptr selectionChanged, TTF_Font *font);
+int CheckTouchCollisionListGrid(ListGrid_t *gv, int touchX, int touchY);

@@ -37,6 +37,9 @@ void RenderShapeLinkList(ShapeLinker_t *list){
             case TextBoxType:
                 DrawTextBoxSDL((TextCentered_t*)iter->item);
                 break;
+            case ListGridType:
+                DrawListGrid(iter->item);
+                break;
         }
     }
 
