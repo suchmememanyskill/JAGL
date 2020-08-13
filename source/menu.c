@@ -51,7 +51,7 @@ int _JumpToClosestBox(ShapeLinker_t *list, int direction, ShapeLinker_t *src, in
             dstx = dstbtn->pos.x + dstbtn->pos.w / 2;
             dsty = dstbtn->pos.y + dstbtn->pos.h / 2;
 
-            if (dstbtn->options & BUTTON_DISABLED)
+            if (dstbtn->options & (BUTTON_DISABLED | BUTTON_NOJOYSEL))
                 continue;
         }
         else if (iter->type == ListViewType){
@@ -297,9 +297,16 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler){
 
                     int count = ShapeLinkCount(gv->text);
                     int c = gv->fitOnX;
+                    bool moveOut = false;
 
-                    if (gv->highlight < count - 1 && direction == DirectionRight && gv->highlight % c != c - 1)
-                        gv->highlight++;
+                    if (direction == DirectionRight){
+                        if (gv->highlight < count - 1 && gv->highlight % c != c - 1)
+                            gv->highlight++;
+                        else if (gv->highlight == count - 1 && gv->highlight % c != c - 1)
+                            gv->highlight -= c - 1;
+                        else
+                            moveOut = true;
+                    }
                     else if (gv->highlight > 0 && direction == DirectionLeft && gv->highlight % c != 0)
                         gv->highlight--;
                     else if (direction == DirectionDown){
@@ -307,13 +314,18 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler){
                             gv->highlight += c;
                         else if (gv->highlight < count - count % c)
                             gv->highlight = count - 1;
+                        else
+                            moveOut = true;
                     }
                         
                     else if (gv->highlight >= c && direction == DirectionUp)
                         gv->highlight -= c;
-                    else {
+                    else 
+                        moveOut = true;
+                    
+                    if (moveOut)
                         res = _JumpToClosestBox(ctx.all, direction, ctx.selected, ctx.curOffset);
-                    }
+                    
                 }
                 else {
                     ((Button_t*)ctx.selected->item)->options |= BUTTON_HIGHLIGHT;
@@ -363,7 +375,12 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler){
                 ctx.origin = OriginFunction;
                 ((ListView_t *)ctx.selected->item)->changeSelection(&ctx);
             }
-                
+        }
+        else if (ctx.selected->type == ListGridType){
+            if (((ListGrid_t *)ctx.selected->item)->changeSelection != NULL){
+                ctx.origin = OriginFunction;
+                ((ListGrid_t *)ctx.selected->item)->changeSelection(&ctx);
+            }
         }
 
         if (hasScreenChanged && menuRun)

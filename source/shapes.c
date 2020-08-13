@@ -36,16 +36,18 @@ void RectangleOutlineFree(RectangleOutline_t *Rectangle){
     free(Rectangle);
 }
 
-Image_t *ImageCreate(SDL_Texture *tex, SDL_Rect pos){
+Image_t *ImageCreate(SDL_Texture *tex, SDL_Rect pos, u8 options){
     Image_t *out = malloc(sizeof(Image_t));
     out->pos = pos;
     out->texture = tex;
+    out->options = options;
 
     return out;
 }
 
 void ImageFree(Image_t *img){
-    SDL_DestroyTexture(img->texture);
+    if (img->options & IMAGE_CLEANUPTEX && img->texture != NULL)
+        SDL_DestroyTexture(img->texture);
     free(img);
 }
 
@@ -91,7 +93,10 @@ Button_t *ButtonCreate(SDL_Rect pos, SDL_Color primary, SDL_Color secondary, SDL
     out->textcolor = textcolor;
     out->options = options;
     out->style = style;
-    out->text = CopyTextUtil(text);
+    if (text)
+        out->text = CopyTextUtil(text);
+    else
+        out->text = NULL;
     out->function = function;
     out->highlight = highlight;
     out->font = font;
@@ -107,10 +112,14 @@ void ButtonFree(Button_t *btn){
 void DrawButton(Button_t *button){
     SDL_Color backcolor = (button->options & BUTTON_PRESSED) ? button->secondary : ((button->options & BUTTON_HIGHLIGHT) ? button->highlight : button->primary);
     Rectangle_t *rect = RectangleCreate(button->pos, backcolor, 1);
-    TextCentered_t *text = TextCenteredCreate(button->pos, button->text, button->textcolor, button->font);
 
     DrawRectSDL(rect);
-    DrawCenteredTextSDL(text);
+
+    if (button->text != NULL){
+        TextCentered_t *text = TextCenteredCreate(button->pos, button->text, button->textcolor, button->font);
+        DrawCenteredTextSDL(text);
+        TextCenteredFree(text);
+    }
 
     switch (button->style){
         case ButtonStyleBorder:;
@@ -136,7 +145,6 @@ void DrawButton(Button_t *button){
     }
 
     RectangleFree(rect);
-    TextCenteredFree(text);
 }
 
 int CheckTouchCollisionButton(Button_t *btn, int touchX, int touchY){
@@ -199,6 +207,15 @@ ListView_t *ListViewCreate(SDL_Rect pos, int entrySize, SDL_Color primary, SDL_C
 }
 
 void ListViewFree(ListView_t *lv){
+    if (lv->options & LIST_CLEANUPTEX){
+        for (ShapeLinker_t *iter = lv->text; iter != NULL; iter = iter->next){
+            if (iter->type == ListItemType){
+                ListItem_t *li = iter->item;
+                if (li->leftImg != NULL)
+                    SDL_DestroyTexture(li->leftImg);
+            }
+        }
+    }
     ShapeLinkDispose(&lv->text);
     free(lv);
 }
@@ -372,6 +389,15 @@ ListGrid_t *ListGridCreate(SDL_Rect pos, u8 fitOnX, int entryYSize, SDL_Color pr
 }
 
 void ListGridFree(ListGrid_t *gv){
+    if (gv->options & LIST_CLEANUPTEX){
+        for (ShapeLinker_t *iter = gv->text; iter != NULL; iter = iter->next){
+            if (iter->type == ListItemType){
+                ListItem_t *li = iter->item;
+                if (li->leftImg != NULL)
+                    SDL_DestroyTexture(li->leftImg);
+            }
+        }
+    }
     ShapeLinkDispose(&gv->text);
     free(gv);
 }
@@ -483,7 +509,7 @@ void DrawListGrid(ListGrid_t *gv){
 
             if (item->rightText){
                 int r = (gv->entryYSize - AddYOffset) / 2;
-                TextCentered_t DText = {posW, r, {posX, posY + AddYOffset, item->rightText, item->rightColor, gv->font}};
+                TextCentered_t DText = {posW, r, {posX, posY + AddYOffset + 5, item->rightText, item->rightColor, gv->font}};
                 DrawCenteredTextSDL(&DText);
             }
 
@@ -571,6 +597,9 @@ void ProgressBarFree(ProgressBar_t *pb){
 }
 
 void DrawProgressBar(ProgressBar_t *bar){
+    if (bar->percentage > 100)
+        bar->percentage = 100;
+        
     int wfilled = bar->pos.w * bar->percentage / 100, wempty = bar->pos.w - wfilled;
     SDL_Rect filled = POS(bar->pos.x, bar->pos.y, wfilled, bar->pos.h);
     SDL_Rect empty = POS(bar->pos.x + wfilled, bar->pos.y, wempty, bar->pos.h);

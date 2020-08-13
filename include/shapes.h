@@ -72,9 +72,12 @@ typedef struct {
     Text_t text;
 } TextCentered_t;
 
+#define IMAGE_CLEANUPTEX BIT(0)
+
 typedef struct {
     SDL_Texture *texture;
     SDL_Rect pos;
+    u8 options;
 } Image_t;
 
 typedef struct {
@@ -112,6 +115,7 @@ typedef int (*func_ptr)(Context_t *ctx);
 #define BUTTON_DISABLED BIT(0)
 #define BUTTON_PRESSED BIT(1)
 #define BUTTON_HIGHLIGHT BIT(2)
+#define BUTTON_NOJOYSEL BIT(3)
 
 enum {
     ButtonStyleFlat = 0,
@@ -136,6 +140,7 @@ typedef struct {
 #define LIST_SELECTED BIT(3)
 #define LIST_ALWAYSRENDERSELECTED BIT(4)
 #define LIST_CENTERLEFT BIT(5)
+#define LIST_CLEANUPTEX BIT(6)
 
 typedef struct {
     SDL_Rect pos;
@@ -183,7 +188,7 @@ typedef struct {
 
 Rectangle_t *RectangleCreate(SDL_Rect pos, SDL_Color color, int flood);
 RectangleOutline_t *RectangleOutlineCreate(SDL_Rect pos, SDL_Color color, int flood, int borderSize);
-Image_t *ImageCreate(SDL_Texture *tex, SDL_Rect pos);
+Image_t *ImageCreate(SDL_Texture *tex, SDL_Rect pos, u8 options);
 Text_t *TextCreate(int x, int y, char *text, SDL_Color color, TTF_Font *font);
 TextCentered_t *TextCenteredCreate(SDL_Rect pos, char *text, SDL_Color color, TTF_Font *font);
 Button_t *ButtonCreate(SDL_Rect pos, SDL_Color primary, SDL_Color secondary, SDL_Color textcolor, SDL_Color highlight, u8 options, u8 style, char *text, TTF_Font *font, func_ptr function);

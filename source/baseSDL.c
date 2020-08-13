@@ -106,7 +106,8 @@ void DrawGlyph(Glyph_t *glyph){
 void DrawCenteredTextSDL(TextCentered_t *text){
     SizeInfo_t size = GetTextSizeSDL(text->text.font, text->text.text);
     Text_t newText = text->text;
-    newText.x += (text->w - size.w) / 2;
+    if (text->w >= size.w)
+        newText.x += (text->w - size.w) / 2;
     newText.y += (text->h - size.h) / 2;
     DrawTextSDL(&newText);
 }
