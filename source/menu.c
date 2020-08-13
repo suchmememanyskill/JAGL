@@ -181,7 +181,7 @@ void SelectSelection(Context_t *ctx){
 
 int menuRun = 1;
 
-Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler){
+Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler, func_ptr runEveryFrame){
     int selectionMade = 0, touchSelection = -1, timer = 0, timeOfTimer = 21, hasScreenChanged;
     Context_t ctx = {0, 0, NULL, in, 0,0,0};
     
@@ -381,6 +381,10 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler){
                 ctx.origin = OriginFunction;
                 ((ListGrid_t *)ctx.selected->item)->changeSelection(&ctx);
             }
+        }
+
+        if (runEveryFrame != NULL){
+            runEveryFrame(&ctx);
         }
 
         if (hasScreenChanged && menuRun)
