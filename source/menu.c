@@ -312,7 +312,7 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler, func_ptr runEveryF
                     else if (direction == DirectionDown){
                         if (gv->highlight < count - c)
                             gv->highlight += c;
-                        else if (gv->highlight < count - count % c)
+                        else if (gv->highlight < count - count % c && count % c != 0)
                             gv->highlight = count - 1;
                         else
                             moveOut = true;
