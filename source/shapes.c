@@ -51,7 +51,7 @@ void ImageFree(Image_t *img){
     free(img);
 }
 
-Text_t *TextCreate(int x, int y, char *text, SDL_Color color, TTF_Font *font){
+Text_t *TextCreate(int x, int y, const char *text, SDL_Color color, TTF_Font *font){
     Text_t *out = malloc(sizeof(Text_t));
     out->x = x;
     out->y = y;
@@ -67,7 +67,7 @@ void TextFree(Text_t *text){
     free(text);
 }
 
-TextCentered_t *TextCenteredCreate(SDL_Rect pos, char *text, SDL_Color color, TTF_Font *font){
+TextCentered_t *TextCenteredCreate(SDL_Rect pos, const char *text, SDL_Color color, TTF_Font *font){
     TextCentered_t *out = malloc(sizeof(TextCentered_t));
     out->text.x = pos.x;
     out->text.y = pos.y;
@@ -85,7 +85,7 @@ void TextCenteredFree(TextCentered_t *text){
     free(text);
 }
 
-Button_t *ButtonCreate(SDL_Rect pos, SDL_Color primary, SDL_Color secondary, SDL_Color textcolor, SDL_Color highlight, u8 options, u8 style, char *text, TTF_Font *font, func_ptr function){
+Button_t *ButtonCreate(SDL_Rect pos, SDL_Color primary, SDL_Color secondary, SDL_Color textcolor, SDL_Color highlight, u8 options, u8 style, const char *text, TTF_Font *font, func_ptr function){
     Button_t *out = malloc(sizeof(Button_t));
     out->pos = pos;
     out->primary = primary;
@@ -163,7 +163,7 @@ int CheckTouchCollisionButton(Button_t *btn, int touchX, int touchY){
 }
 
 
-ListItem_t *ListItemCreate(SDL_Color LColor, SDL_Color RColor, SDL_Texture *LImg, char *LText, char *RText){
+ListItem_t *ListItemCreate(SDL_Color LColor, SDL_Color RColor, SDL_Texture *LImg, const char *LText, const char *RText){
     ListItem_t *out = calloc(1, sizeof(ListItem_t));
     out->leftColor = LColor;
     out->rightColor = RColor;
