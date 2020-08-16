@@ -141,6 +141,7 @@ typedef struct {
 #define LIST_ALWAYSRENDERSELECTED BIT(4)
 #define LIST_CENTERLEFT BIT(5)
 #define LIST_CLEANUPTEX BIT(6)
+#define GRID_NOSIDEESC BIT(7) // Fuck we're outta bits
 
 typedef struct {
     SDL_Rect pos;

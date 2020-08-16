@@ -300,15 +300,17 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler, func_ptr runEveryF
                     bool moveOut = false;
 
                     if (direction == DirectionRight){
-                        if (gv->highlight < count - 1 && gv->highlight % c != c - 1)
+                        if (gv->highlight < count - 1 && (gv->highlight % c != c - 1 || gv->options & GRID_NOSIDEESC))
                             gv->highlight++;
                         else if (gv->highlight == count - 1 && gv->highlight % c != c - 1)
                             gv->highlight -= c - 1;
                         else
-                            moveOut = true;
+                            moveOut = !(gv->options & GRID_NOSIDEESC);
                     }
-                    else if (gv->highlight > 0 && direction == DirectionLeft && gv->highlight % c != 0)
-                        gv->highlight--;
+                    else if (direction == DirectionLeft){
+                        if (gv->highlight > 0 && (gv->highlight % c != 0 || gv->options & GRID_NOSIDEESC))
+                            gv->highlight--;
+                    }
                     else if (direction == DirectionDown){
                         if (gv->highlight < count - c)
                             gv->highlight += c;

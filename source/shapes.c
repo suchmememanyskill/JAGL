@@ -534,7 +534,7 @@ int CheckTouchCollisionListGrid(ListGrid_t *gv, int touchX, int touchY){ // stub
         int listLen = ShapeLinkCount(gv->text);
         bool scrollbar = gv->pos.h < ceil(listLen / 4.0f) * gv->entryYSize;
 
-        if (gv->pos.x + gv->pos.w - 50 < touchX && scrollbar){
+        if (gv->pos.x + gv->pos.w - 50 <= touchX && scrollbar){
             float percentOnScreen =  (float)gv->pos.h / ((ceil(listLen / 4.0f) * 4) / (float)gv->fitOnX * gv->entryYSize);
             float sizePerPixel =  ((float)gv->pos.h - gv->pos.h * percentOnScreen) / (float)(((ceil(listLen / 4.0f) * 4) / (float)gv->fitOnX * gv->entryYSize) - gv->pos.h);
 
@@ -562,7 +562,7 @@ int CheckTouchCollisionListGrid(ListGrid_t *gv, int touchX, int touchY){ // stub
             int rSel = (touchY - gv->pos.y + gv->offset) / gv->entryYSize;
             int cSel = (touchX - gv->pos.x) / entryXSize;
 
-            if (cSel > gv->fitOnX)
+            if (cSel >= gv->fitOnX)
                 return 0;
 
             int sel = rSel * gv->fitOnX + cSel;
