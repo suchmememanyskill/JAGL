@@ -402,6 +402,8 @@ void ListGridFree(ListGrid_t *gv){
     free(gv);
 }
 
+#define MIN(x, y) ((x < y) ? x : y)
+
 void DrawListGrid(ListGrid_t *gv){
     if (gv->text == NULL)
         return;
@@ -437,8 +439,8 @@ void DrawListGrid(ListGrid_t *gv){
     if (scrollbar){
         Rectangle_t scrollBg = {POS(gv->pos.x + gv->pos.w - 50, gv->pos.y, 50, gv->pos.h), gv->selected, 1};
 
-        float percentOnScreen =  (float)gv->pos.h / ((ceil(listLen / 4.0f) * 4) / (float)gv->fitOnX * gv->entryYSize);
-        float sizePerPixel =  ((float)gv->pos.h - gv->pos.h * percentOnScreen) / (float)(((ceil(listLen / 4.0f) * 4) / (float)gv->fitOnX * gv->entryYSize) - gv->pos.h);
+        float percentOnScreen =  (float)gv->pos.h / ((ceil(listLen / (float)gv->fitOnX) * gv->fitOnX) / (float)gv->fitOnX * gv->entryYSize);
+        float sizePerPixel =  ((float)gv->pos.h - gv->pos.h * percentOnScreen) / (float)(((ceil(listLen / (float)gv->fitOnX) * gv->fitOnX) / (float)gv->fitOnX * gv->entryYSize) - gv->pos.h);
 
         Rectangle_t scrollBar = {POS(gv->pos.x + gv->pos.w - 50, gv->pos.y + (sizePerPixel * gv->offset), 50, (gv->pos.h * percentOnScreen)), gv->pressed, 1};
 
@@ -472,13 +474,13 @@ void DrawListGrid(ListGrid_t *gv){
 
             int posX = curXPixOffset + gv->pos.x + 5;
             int posW = entryXSize - 10;
-            int clipH = (curYPixOffset < 0) ? posH + curYPixOffset : posH; 
+            //int clipH = (curYPixOffset < 0) ? posH + curYPixOffset : posH; 
+            int clipH = MIN(posH, gv->pos.h - curYPixOffset);
             //int clipH = posH;
             int clipY = (curYPixOffset < 0) ? gv->pos.y : posY;
 
-            
-            if (clipY + clipH > gv->pos.y + gv->pos.h)
-                clipH += gv->pos.y + gv->pos.h - clipY + clipH;
+            //if (clipY + clipH > gv->pos.y + gv->pos.h)
+            //    clipH = gv->pos.h - curYPixOffset;
             
 
             SDL_Rect clip = POS(posX, clipY, posW, clipH);
@@ -535,8 +537,8 @@ int CheckTouchCollisionListGrid(ListGrid_t *gv, int touchX, int touchY){ // stub
         bool scrollbar = gv->pos.h < ceil(listLen / 4.0f) * gv->entryYSize;
 
         if (gv->pos.x + gv->pos.w - 50 <= touchX && scrollbar){
-            float percentOnScreen =  (float)gv->pos.h / ((ceil(listLen / 4.0f) * 4) / (float)gv->fitOnX * gv->entryYSize);
-            float sizePerPixel =  ((float)gv->pos.h - gv->pos.h * percentOnScreen) / (float)(((ceil(listLen / 4.0f) * 4) / (float)gv->fitOnX * gv->entryYSize) - gv->pos.h);
+        float percentOnScreen =  (float)gv->pos.h / ((ceil(listLen / (float)gv->fitOnX) * gv->fitOnX) / (float)gv->fitOnX * gv->entryYSize);
+        float sizePerPixel =  ((float)gv->pos.h - gv->pos.h * percentOnScreen) / (float)(((ceil(listLen / (float)gv->fitOnX) * gv->fitOnX) / (float)gv->fitOnX * gv->entryYSize) - gv->pos.h);
 
             int minY = gv->pos.y + (gv->pos.h * percentOnScreen / 2);
             int maxY = gv->pos.y + gv->pos.h - (gv->pos.h * percentOnScreen / 2);

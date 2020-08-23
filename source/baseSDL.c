@@ -113,6 +113,9 @@ void DrawCenteredTextSDL(TextCentered_t *text){
 }
 
 void DrawTextBoxSDL(TextCentered_t *text){
+    if (!text->text.text[0])
+        return;
+        
     SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(text->text.font, text->text.text, text->text.color, text->w);
     SDL_Rect pos = {text->text.x, text->text.y, surface->w, surface->h};
     SDL_Rect textPos = {text->text.x, text->text.y, text->w, text->h};
