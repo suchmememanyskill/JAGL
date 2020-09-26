@@ -409,7 +409,7 @@ void DrawListGrid(ListGrid_t *gv){
         return;
 
     int listLen = ShapeLinkCount(gv->text);
-    bool scrollbar = gv->pos.h < ceil(listLen / 4.0f) * gv->entryYSize;
+    bool scrollbar = gv->pos.h < ceil(listLen / (float)gv->fitOnX) * gv->entryYSize;
     
     int entryXSize = (gv->pos.w - ((scrollbar) ? 50 : 0)) / gv->fitOnX;
 
@@ -534,7 +534,7 @@ int CheckTouchCollisionListGrid(ListGrid_t *gv, int touchX, int touchY){ // stub
     
     if (gv->pos.x < touchX && gv->pos.x + gv->pos.w > touchX && gv->pos.y < touchY && gv->pos.y + gv->pos.h > touchY){
         int listLen = ShapeLinkCount(gv->text);
-        bool scrollbar = gv->pos.h < ceil(listLen / 4.0f) * gv->entryYSize;
+        bool scrollbar = gv->pos.h < ceil(listLen / (float)gv->fitOnX) * gv->entryYSize;
 
         if (gv->pos.x + gv->pos.w - 50 <= touchX && scrollbar){
         float percentOnScreen =  (float)gv->pos.h / ((ceil(listLen / (float)gv->fitOnX) * gv->fitOnX) / (float)gv->fitOnX * gv->entryYSize);
