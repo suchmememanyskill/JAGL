@@ -7,3 +7,4 @@ Make a menu out of a ShapeLinker_t list. Must contain at least 1 listview or but
 @param buttonHandler This function will get ran when any other button than the touchscreen, A button or dpad/joysticks are pressed. Function needs to be in format "int (funcname)(Context_t *ctx)". You can also leave this NULL for no extra button handling
 */
 Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler, func_ptr runEveryFrame);
+void InitHid();

@@ -14,6 +14,14 @@ enum {
     DirectionLeft
 };
 
+PadState pad;
+
+void InitHid(){
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+    padInitializeDefault(&pad);
+    hidInitializeTouchScreen();
+}
+
 int _JumpToClosestBox(ShapeLinker_t *list, int direction, ShapeLinker_t *src, int currentSelectionIndex){
     int closestSelection = -1, currentScore = 5000, offset = 0;
     int srcx = 0, srcy = 0, dstx = 0, dsty = 0, weight;
@@ -96,15 +104,17 @@ int _JumpToClosestBox(ShapeLinker_t *list, int direction, ShapeLinker_t *src, in
 
 int CheckTouchCollision(ShapeLinker_t *list){
     int offset = 0, touchX, touchY;
-    touchPosition touch;
+    HidTouchScreenState screenState = {0};
 
-    if (hidTouchCount() <= 0)
+    if (!hidGetTouchScreenStates(&screenState, 1)){
+        return -1;
+    }
+
+    if (screenState.count <= 0)
         return -1;
 
-    hidTouchRead(&touch, 0);
-
-    touchX = touch.px; //+ (touch.dx / 2);
-    touchY = touch.py; //+ (touch.dy / 2);
+    touchX = screenState.touches[0].x; //+ (touch.dx / 2);
+    touchY = screenState.touches[0].y; //+ (touch.dy / 2);
 
     for (ShapeLinker_t *iter = list; iter != NULL; iter = iter->next, offset++){
         if (iter->type < ListViewType)
@@ -199,10 +209,14 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler, func_ptr runEveryF
     SelectSelection(&ctx);
 
     while (menuRun){
-        hidScanInput();
-        ctx.kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-        ctx.kUp = hidKeysUp(CONTROLLER_P1_AUTO);
-        ctx.kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+        padUpdate(&pad);
+        ctx.kDown = padGetButtonsDown(&pad);
+        ctx.kUp = padGetButtonsUp(&pad);
+        ctx.kHeld = padGetButtons(&pad);
+        int touchSelTemp = CheckTouchCollision(ctx.all);
+        if (touchSelTemp >= 0)
+            touchSelection = touchSelTemp;
+
         hasScreenChanged = 1;
         
         if (timer > 0){
@@ -228,8 +242,7 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler, func_ptr runEveryF
             return ctx;
         }
 
-        else if (ctx.kUp & KEY_TOUCH && touchSelection >= 0){
-
+        else if (touchSelection >= 0 && touchSelTemp < 0){
             if (ctx.selected->type == ButtonType){
                 SETBIT(((Button_t*)ctx.selected->item)->options, BUTTON_HIGHLIGHT, 0);
             }
@@ -241,13 +254,9 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler, func_ptr runEveryF
             ctx.origin = OriginFunction;
             ctx.selected = ShapeLinkOffset(ctx.all, ctx.curOffset);
             touchSelection = -1;
-
+            
             if (RunSelection(&ctx) < 0)
                 return ctx; 
-        }
-
-        else if (ctx.kHeld & KEY_TOUCH){
-            touchSelection = CheckTouchCollision(ctx.all);
         }
 
         else if (ctx.kHeld & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP | KEY_RSTICK_DOWN | KEY_RSTICK_LEFT | KEY_RSTICK_RIGHT | KEY_RSTICK_UP)){            
