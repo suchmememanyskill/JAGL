@@ -146,7 +146,7 @@ typedef struct {
 typedef struct {
     SDL_Rect pos;
     int entrySize;
-    SDL_Color primary, selected, pressed;
+    SDL_Color primary, selected, pressed, scrollbarBg, scrollbarThumb;
     u8 options;
     int highlight;
     int offset;
@@ -160,7 +160,7 @@ typedef struct {
     SDL_Rect pos;
     u8 fitOnX;
     int entryYSize;
-    SDL_Color primary, selected, pressed;
+    SDL_Color primary, selected, pressed, scrollbarBg, scrollbarThumb;
     u8 options;
     int highlight;
     int offset;
@@ -194,7 +194,7 @@ Text_t *TextCreate(int x, int y, const char *text, SDL_Color color, TTF_Font *fo
 TextCentered_t *TextCenteredCreate(SDL_Rect pos, const char *text, SDL_Color color, TTF_Font *font);
 Button_t *ButtonCreate(SDL_Rect pos, SDL_Color primary, SDL_Color secondary, SDL_Color textcolor, SDL_Color highlight, u8 options, u8 style, const char *text, TTF_Font *font, func_ptr function);
 void DrawButton(Button_t *button);
-ListView_t *ListViewCreate(SDL_Rect pos, int entrySize, SDL_Color primary, SDL_Color selected, SDL_Color pressed, u8 options, ShapeLinker_t *textList, func_ptr function, func_ptr selectionChanged, TTF_Font *font);
+ListView_t *ListViewCreate(SDL_Rect pos, int entrySize, SDL_Color primary, SDL_Color selected, SDL_Color pressed, SDL_Color scrollbarBg, SDL_Color scrollbarThumb, u8 options, ShapeLinker_t *textList, func_ptr function, func_ptr selectionChanged, TTF_Font *font);
 void DrawListView(ListView_t *listview);
 void DrawProgressBar(ProgressBar_t *bar);
 ProgressBar_t *ProgressBarCreate(SDL_Rect pos, SDL_Color primary, SDL_Color secondary, u8 style, u8 percentage);
@@ -214,5 +214,5 @@ int CheckTouchCollisionButton(Button_t *btn, int touchX, int touchY);
 int CheckTouchCollisionListView(ListView_t *lv, int touchX, int touchY);
 void DrawListGrid(ListGrid_t *gv);
 void ListGridFree(ListGrid_t *gv);
-ListGrid_t *ListGridCreate(SDL_Rect pos, u8 fitOnX, int entryYSize, SDL_Color primary, SDL_Color selected, SDL_Color pressed, u8 options, ShapeLinker_t *textList, func_ptr function, func_ptr selectionChanged, TTF_Font *font);
+ListGrid_t *ListGridCreate(SDL_Rect pos, u8 fitOnX, int entryYSize, SDL_Color primary, SDL_Color selected, SDL_Color pressed, SDL_Color scrollbarBg, SDL_Color scrollbarThumb, u8 options, ShapeLinker_t *textList, func_ptr function, func_ptr selectionChanged, TTF_Font *font);
 int CheckTouchCollisionListGrid(ListGrid_t *gv, int touchX, int touchY);
