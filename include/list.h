@@ -21,3 +21,12 @@ void ShapeLinkMergeLists(ShapeLinker_t **dst, ShapeLinker_t *add);
 
 // Finds a ShapeType in a ShapeLinker list
 ShapeLinker_t *ShapeLinkFind(ShapeLinker_t  *start, int find);
+
+// Deletes a list entry at offset idx
+void ShapeLinkDel(ShapeLinker_t **start, int idx);
+
+// Finds a ShapeLinker_t in a list of shapelinkers and returns the offset. -1 on not found
+int ShapeLinkGetOffset(ShapeLinker_t *start, ShapeLinker_t *search);
+
+// Finds a ShapeType in a ShapeLinker list and returns it's offset
+int ShapeLinkFindIdx(ShapeLinker_t *start, int find);

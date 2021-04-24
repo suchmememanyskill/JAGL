@@ -122,3 +122,60 @@ ShapeLinker_t *ShapeLinkFind(ShapeLinker_t  *start, int find){
 
     return NULL;
 }
+
+int ShapeLinkFindIdx(ShapeLinker_t *start, int find){
+    ShapeLinker_t *iter = start;
+
+    int i = 0;
+    for (;iter != NULL; iter = iter->next){
+        if (iter->type == find){
+            return i;
+        }
+
+        i++;
+    }
+
+    return -1;
+}
+
+int ShapeLinkGetOffset(ShapeLinker_t *start, ShapeLinker_t *search){
+    ShapeLinker_t *iter = start;
+
+    int i = 0;
+    for (;iter != NULL; iter = iter->next){
+        if (iter == search)
+            return i;
+
+        i++;
+    }
+
+    return -1;
+}
+
+void ShapeLinkDel(ShapeLinker_t **start, int idx){
+    if (start == NULL || idx < 0)
+        return;
+
+    ShapeLinker_t *iter = *start;
+
+    if (idx == 0){
+        *start = iter->next;
+        iter->next = NULL;
+        ShapeLinkDispose(&iter);
+        return;
+    }
+    idx--;
+
+    for (;iter != NULL; iter = iter->next){
+        if (idx <= 0){
+            if (iter->next == NULL)
+                return;
+
+            ShapeLinker_t *del = iter->next;
+            iter->next = iter->next->next;
+            del->next = NULL;
+            ShapeLinkDispose(&del);
+            return;
+        }
+    }
+}
