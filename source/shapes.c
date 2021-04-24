@@ -188,11 +188,13 @@ void ListItemFree(ListItem_t *li){
     free(li);
 }
 
-ListView_t *ListViewCreate(SDL_Rect pos, int entrySize, SDL_Color primary, SDL_Color selected, SDL_Color pressed, u8 options, ShapeLinker_t *textList, func_ptr function, func_ptr selectionChanged, TTF_Font *font){
+ListView_t *ListViewCreate(SDL_Rect pos, int entrySize, SDL_Color primary, SDL_Color selected, SDL_Color pressed, SDL_Color scrollbarBg, SDL_Color scrollbarThumb, u8 options, ShapeLinker_t *textList, func_ptr function, func_ptr selectionChanged, TTF_Font *font){
     ListView_t *out = malloc(sizeof(ListView_t));
     out->primary = primary;
     out->selected = selected;
     out->pressed = pressed;
+    out->scrollbarBg = scrollbarBg;
+    out->scrollbarThumb = scrollbarThumb;
     out->options = options;
     out->highlight = 0;
     out->offset = 0;
@@ -261,12 +263,12 @@ void DrawListView(ListView_t *listview){
     int roffset = 5;
 
     if (listview->entrySize * listLen > listview->pos.h){
-        Rectangle_t scrollBg = {POS(listview->pos.x + listview->pos.w - 50, listview->pos.y, 50, listview->pos.h), listview->selected, 1};
+        Rectangle_t scrollBg = {POS(listview->pos.x + listview->pos.w - 50, listview->pos.y, 50, listview->pos.h), listview->scrollbarBg, 1};
 
         float percentOnScreen =  (float)listview->pos.h / (listview->entrySize * listLen);
         float sizePerPixel =  ((float)listview->pos.h - listview->pos.h * percentOnScreen) / (float)(listLen * listview->entrySize - listview->pos.h);
 
-        Rectangle_t scrollBar = {POS(listview->pos.x + listview->pos.w - 50, listview->pos.y + (sizePerPixel * listview->offset), 50, (listview->pos.h * percentOnScreen)), listview->pressed, 1};
+        Rectangle_t scrollBar = {POS(listview->pos.x + listview->pos.w - 50, listview->pos.y + (sizePerPixel * listview->offset), 50, (listview->pos.h * percentOnScreen)), listview->scrollbarThumb, 1};
 
         DrawRectSDL(&scrollBg);
         DrawRectSDL(&scrollBar);
@@ -369,11 +371,13 @@ int CheckTouchCollisionListView(ListView_t *lv, int touchX, int touchY){
     return 0;
 }
 
-ListGrid_t *ListGridCreate(SDL_Rect pos, u8 fitOnX, int entryYSize, SDL_Color primary, SDL_Color selected, SDL_Color pressed, u8 options, ShapeLinker_t *textList, func_ptr function, func_ptr selectionChanged, TTF_Font *font){
+ListGrid_t *ListGridCreate(SDL_Rect pos, u8 fitOnX, int entryYSize, SDL_Color primary, SDL_Color selected, SDL_Color pressed, SDL_Color scrollbarBg, SDL_Color scrollbarThumb, u8 options, ShapeLinker_t *textList, func_ptr function, func_ptr selectionChanged, TTF_Font *font){
     ListGrid_t *out = malloc(sizeof(ListGrid_t));
     out->primary = primary;
     out->selected = selected;
     out->pressed = pressed;
+    out->scrollbarBg = scrollbarBg;
+    out->scrollbarThumb = scrollbarThumb;
     out->options = options;
     out->highlight = 0;
     out->offset = 0;
@@ -437,12 +441,12 @@ void DrawListGrid(ListGrid_t *gv){
     DrawRectSDL(&bg);
 
     if (scrollbar){
-        Rectangle_t scrollBg = {POS(gv->pos.x + gv->pos.w - 50, gv->pos.y, 50, gv->pos.h), gv->selected, 1};
+        Rectangle_t scrollBg = {POS(gv->pos.x + gv->pos.w - 50, gv->pos.y, 50, gv->pos.h), gv->scrollbarBg, 1};
 
         float percentOnScreen =  (float)gv->pos.h / ((ceil(listLen / (float)gv->fitOnX) * gv->fitOnX) / (float)gv->fitOnX * gv->entryYSize);
         float sizePerPixel =  ((float)gv->pos.h - gv->pos.h * percentOnScreen) / (float)(((ceil(listLen / (float)gv->fitOnX) * gv->fitOnX) / (float)gv->fitOnX * gv->entryYSize) - gv->pos.h);
 
-        Rectangle_t scrollBar = {POS(gv->pos.x + gv->pos.w - 50, gv->pos.y + (sizePerPixel * gv->offset), 50, (gv->pos.h * percentOnScreen)), gv->pressed, 1};
+        Rectangle_t scrollBar = {POS(gv->pos.x + gv->pos.w - 50, gv->pos.y + (sizePerPixel * gv->offset), 50, (gv->pos.h * percentOnScreen)), gv->scrollbarThumb, 1};
 
         DrawRectSDL(&scrollBg);
         DrawRectSDL(&scrollBar);
