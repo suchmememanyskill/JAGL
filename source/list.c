@@ -177,5 +177,7 @@ void ShapeLinkDel(ShapeLinker_t **start, int idx){
             ShapeLinkDispose(&del);
             return;
         }
+
+        idx--;
     }
 }
