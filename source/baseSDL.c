@@ -95,6 +95,9 @@ void DrawTextSDL(Text_t *text){
 }
 
 void DrawGlyph(Glyph_t *glyph){
+    if (glyph->options & TEXT_GLYPH_NO_RENDER)
+        return;
+
     SDL_Surface *surface = TTF_RenderGlyph_Blended(glyph->font, glyph->glyph, glyph->color);
     SDL_Rect pos = {glyph->x, glyph->y, surface->w, surface->h};
     SDL_Texture *t = _ConvSurfToTexSDL(surface);

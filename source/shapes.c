@@ -642,6 +642,7 @@ Glyph_t *GlyphCreate(int x, int y, u16 glyph, SDL_Color color, TTF_Font *font){
     out->glyph = glyph;
     out->color = color;
     out->font = font;
+    out->options = 0;
 
     return out;
 }

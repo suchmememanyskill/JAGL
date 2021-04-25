@@ -60,11 +60,14 @@ typedef struct {
     TTF_Font *font;
 } Text_t;
 
+#define TEXT_GLYPH_NO_RENDER BIT(0)
+
 typedef struct {
     int x, y;
     u16 glyph;
     SDL_Color color;
     TTF_Font *font;
+    u8 options;
 } Glyph_t;
 
 typedef struct {
