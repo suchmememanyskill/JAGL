@@ -223,12 +223,12 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler, func_ptr runEveryF
             timer--;
         }
 
-        if (ctx.kDown & KEY_A){
+        if (ctx.kDown & HidNpadButton_A){
             ActivateSelection(&ctx);
             selectionMade = 1;
         }
 
-        else if (ctx.kUp & KEY_A && selectionMade){
+        else if (ctx.kUp & HidNpadButton_A && selectionMade){
             selectionMade = 0;
             ctx.origin = OriginFunction;
 
@@ -236,7 +236,7 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler, func_ptr runEveryF
                 return ctx; 
         }
 
-        else if (ctx.kDown & KEY_PLUS){
+        else if (ctx.kDown & HidNpadButton_Plus){
             menuRun = 0;
             ctx.origin = OriginPlus;
             return ctx;
@@ -259,23 +259,23 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler, func_ptr runEveryF
                 return ctx; 
         }
 
-        else if (ctx.kHeld & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP | KEY_RSTICK_DOWN | KEY_RSTICK_LEFT | KEY_RSTICK_RIGHT | KEY_RSTICK_UP)){            
+        else if (ctx.kHeld & (HidNpadButton_AnyDown | HidNpadButton_AnyUp | HidNpadButton_AnyLeft | HidNpadButton_AnyRight)){            
             int direction = 0, res = -1;
             
-            if (timer > 10 && ctx.kHeld & (KEY_RSTICK_DOWN | KEY_RSTICK_LEFT | KEY_RSTICK_RIGHT | KEY_RSTICK_UP))
+            if (timer > 10 && ctx.kHeld & (HidNpadButton_StickRLeft | HidNpadButton_StickRUp | HidNpadButton_StickRRight | HidNpadButton_StickRDown))
                 timer = 3;
 
             if (timer == 0){
                 timer = timeOfTimer;
                 timeOfTimer = 3;
 
-                if (ctx.kHeld & (KEY_LSTICK_DOWN | KEY_DDOWN | KEY_RSTICK_DOWN))
+                if (ctx.kHeld & HidNpadButton_AnyDown)
                     direction = DirectionDown;
-                else if (ctx.kHeld & (KEY_LSTICK_UP | KEY_DUP | KEY_RSTICK_UP))
+                else if (ctx.kHeld & HidNpadButton_AnyUp)
                     direction = DirectionUp;
-                else if (ctx.kHeld & (KEY_LSTICK_LEFT | KEY_DLEFT | KEY_RSTICK_LEFT))
+                else if (ctx.kHeld & HidNpadButton_AnyLeft)
                     direction = DirectionLeft;
-                else if (ctx.kHeld & (KEY_LSTICK_RIGHT | KEY_DRIGHT | KEY_RSTICK_RIGHT))
+                else if (ctx.kHeld & HidNpadButton_AnyRight)
                     direction = DirectionRight;
 
                 if (ctx.selected->type == ListViewType){
@@ -368,7 +368,7 @@ Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler, func_ptr runEveryF
                     return ctx;
             }
         }
-        else if (!(ctx.kHeld & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP | KEY_RSTICK_DOWN | KEY_RSTICK_LEFT | KEY_RSTICK_RIGHT | KEY_RSTICK_UP))){
+        else if (!(ctx.kHeld & (HidNpadButton_AnyDown | HidNpadButton_AnyUp | HidNpadButton_AnyLeft | HidNpadButton_AnyRight))){
             timer = 0;
             timeOfTimer = 23;
         }
