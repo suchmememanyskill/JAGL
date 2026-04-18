@@ -18,6 +18,7 @@ SizeInfo_t GetTextureSize(SDL_Texture *texture);
 SDL_Texture *ScreenshotToTexture();
 SDL_Texture *LoadImageSDL(const char *path);
 SDL_Texture *LoadImageMemSDL(void *data, int size);
+SDL_Texture *LoadImageRGBASDL(const void *rgba, int width, int height);
 void DrawTextSDL(Text_t *text);
 void DrawCenteredTextSDL(TextCentered_t *text);
 void DrawImageSDL(Image_t *image);

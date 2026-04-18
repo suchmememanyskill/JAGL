@@ -86,6 +86,11 @@ SDL_Texture *LoadImageMemSDL(void *data, int size){
     return IMG_LoadTexture_RW(SDLMainRenderer, SDL_RWFromMem(data, size), 1);
 }
 
+SDL_Texture *LoadImageRGBASDL(const void *rgba, int width, int height){
+    SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormatFrom((void *)rgba, width, height, 32, width * 4, SDL_PIXELFORMAT_RGBA32);
+    return _ConvSurfToTexSDL(surface);
+}
+
 void DrawTextSDL(Text_t *text){
     SDL_Surface *surface = TTF_RenderUTF8_Blended(text->font, text->text, text->color);
     SDL_Rect pos = {text->x, text->y, surface->w, surface->h};
